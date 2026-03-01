@@ -16,6 +16,7 @@ df = pd.read_csv("CNR-EXT.csv")
 
 # Remove bad last row
 df = df.iloc[:-1].reset_index(drop=True)
+
 cameras = sorted(df["camera"].unique())
 current_index = 0
 
@@ -55,3 +56,4 @@ fig.canvas.mpl_connect("key_press_event", on_key)
 
 show_camera(current_index)
 plt.show()
+
