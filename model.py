@@ -162,8 +162,22 @@ class ConvNet(nn.Module):
         self.gap = nn.AdaptiveAvgPool2d((1, 1))
 
         # 128 -> 64 -> 1
-        
         self.fc1 = nn.Linear(128, 64)
         self.fc2 = nn.Linear(64, 1)
 
         self.relu = nn.ReLU()
+
+        # conv forward 
+    def forward(self, x):
+        x = self.relu(self.conv1(x))
+        x = self.pool1(x)
+        x = self.relu(self.conv2(x))
+        x = self.pool2(x)
+        x = self.relu(self.conv3(x))
+        x = self.pool3(x)
+
+        x = self.gap(x)                 
+        x = x.flatten(start_dim=1)     
+        x = self.relu(self.fc1(x))      
+        output = self.fc2(x)            
+        return output
