@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import os
 
 import torch
+import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 from torchvision.transforms import v2
 
@@ -141,3 +142,28 @@ for images, labels in test_loader:
     print(images.shape)
     print(labels)
     break
+
+class ConvNet(nn.Module):
+    def __init__(self):
+        super().__init__()
+        #input, output, kernel, stride, padding
+        self.conv1 = nn.Conv2d(3, 32, 3, 1, 1)
+        # kernel size, stride
+        self.pool1 = nn.MaxPool2d(2, 2)
+
+        self.conv2 = nn.Conv2d(32, 64, 3, 1, 1)
+        self.pool2 = nn.MaxPool2d(2, 2)
+
+        self.conv3 = nn.Conv2d(64, 128, 3, 1, 1)
+        self.pool3 = nn.MaxPool2d(2, 2)
+
+        # less overfitting, faster training. reduces number of parameters
+        # [128, 46, 62] -> [128, 1, 1]
+        self.gap = nn.AdaptiveAvgPool2d((1, 1))
+
+        # 128 -> 64 -> 1
+        
+        self.fc1 = nn.Linear(128, 64)
+        self.fc2 = nn.Linear(64, 1)
+
+        self.relu = nn.ReLU()
