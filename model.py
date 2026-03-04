@@ -148,10 +148,8 @@ class ConvNet(nn.Module):
         self.pool1 = nn.MaxPool2d(2, 2)
 
         self.conv2 = nn.Conv2d(32, 64, 3, 1, 1)
-        self.pool2 = nn.MaxPool2d(2, 2)
-
         self.conv3 = nn.Conv2d(64, 128, 3, 1, 1)
-        self.pool3 = nn.MaxPool2d(2, 2)
+        
 
         # less overfitting, faster training. reduces number of parameters
         # [128, 46, 62] -> [128, 1, 1]
