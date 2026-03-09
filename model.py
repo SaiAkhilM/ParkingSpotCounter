@@ -75,14 +75,14 @@ fig.canvas.mpl_connect("key_press_event", on_key)
 # transforms
 train_transforms = v2.Compose([
     v2.ToTensor(),
-    v2.Resize((375, 500)),
+    v2.Resize((128, 128)),
     v2.RandomHorizontalFlip(p=0.5),
     v2.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.2)
 ])
 
 eval_transforms = v2.Compose([
     v2.ToTensor(),
-    v2.Resize((375, 500))
+    v2.Resize((128, 128))
 ])
 
 # dataset
@@ -202,7 +202,7 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
 # training loop
 print("\nStarting Training...\n")
-epochs = 5
+epochs = 1
 
 for epoch in range(epochs):
 
