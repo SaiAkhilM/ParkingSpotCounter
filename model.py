@@ -195,8 +195,9 @@ print("Output shape:", outputs.shape)
 criterion = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-print("\nStarting Training...\n")
+
 # training loop
+print("\nStarting Training...\n")
 epochs = 5
 
 for epoch in range(epochs):
@@ -218,9 +219,47 @@ for epoch in range(epochs):
 
         total_loss += loss.item()
 
-    avg_loss = total_loss / len(train_loader)
+    avg_train_loss = total_loss / len(train_loader)
 
-    print(f"Epoch {epoch+1}/{epochs} | Train Loss: {avg_loss:.4f}")
+    # validation
+    model.eval()
+    val_loss = 0
+
+    with torch.no_grad():
+        for images, labels in val_loader:
+
+            labels = labels.unsqueeze(1)
+
+            predictions = model(images)
+
+            loss = criterion(predictions, labels)
+
+            val_loss += loss.item()
+
+    avg_val_loss = val_loss / len(val_loader)
+
+    print(f"Epoch {epoch+1}/{epochs} | Train Loss: {avg_train_loss:.4f} | Val Loss: {avg_val_loss:.4f}")
+
+
+
+# ----- FINAL TEST EVALUATION -----
+model.eval()
+test_loss = 0
+
+with torch.no_grad():
+    for images, labels in test_loader:
+
+        labels = labels.unsqueeze(1)
+
+        predictions = model(images)
+
+        loss = criterion(predictions, labels)
+
+        test_loss += loss.item()
+
+avg_test_loss = test_loss / len(test_loader)
+
+print("\nFinal Test Loss:", avg_test_loss)
 
 
 
