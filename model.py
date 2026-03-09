@@ -175,3 +175,5 @@ class ConvNet(nn.Module):
         x = self.relu(self.fc1(x))      
         output = self.fc2(x)            
         return output
+    
+    
