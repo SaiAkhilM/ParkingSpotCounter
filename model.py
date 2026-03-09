@@ -69,8 +69,8 @@ def on_key(event):
 
 fig.canvas.mpl_connect("key_press_event", on_key)
 
-show_camera(current_index)
-plt.show()
+#show_camera(current_index)
+#plt.show()
 
 # transforms
 train_transforms = v2.Compose([
@@ -173,18 +173,56 @@ class ConvNet(nn.Module):
         x = self.pool(x)
 
         x = self.gap(x)                 
-        x = torch.flatten(start_dim=1)     
+        x = torch.flatten(x, start_dim=1)    
 
         x = self.relu(self.fc1(x))      
         output = self.fc2(x)            
         return output
     
-    # device. define model here for the optimizer part
 
-    # Test forward pass
+# device. define model here for the optimizer part
+model = ConvNet()
 
-    # loss and optimizer
-    criterion = nn.MSELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+# Test forward pass
+images, labels = next(iter(train_loader))
+outputs = model(images)
+
+print("\nForward Pass Test")
+print("Input shape:", images.shape)
+print("Output shape:", outputs.shape)
+
+# loss and optimizer
+criterion = nn.MSELoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+
+print("\nStarting Training...\n")
+# training loop
+epochs = 5
+
+for epoch in range(epochs):
+
+    model.train()
+    total_loss = 0
+
+    for images, labels in train_loader:
+
+        labels = labels.unsqueeze(1)  # match output shape [batch,1]
+
+        predictions = model(images)
+
+        loss = criterion(predictions, labels)
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        total_loss += loss.item()
+
+    avg_loss = total_loss / len(train_loader)
+
+    print(f"Epoch {epoch+1}/{epochs} | Train Loss: {avg_loss:.4f}")
+
+
+
     
 
