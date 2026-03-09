@@ -180,8 +180,12 @@ class ConvNet(nn.Module):
         return output
     
 
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("Using device:", device)
+
 # device. define model here for the optimizer part
-model = ConvNet()
+model = ConvNet().to(device)
 
 # Test forward pass
 images, labels = next(iter(train_loader))
@@ -207,6 +211,9 @@ for epoch in range(epochs):
 
     for images, labels in train_loader:
 
+        images = images.to(device)
+        labels = labels.to(device)
+
         labels = labels.unsqueeze(1)  # match output shape [batch,1]
 
         predictions = model(images)
@@ -228,6 +235,9 @@ for epoch in range(epochs):
     with torch.no_grad():
         for images, labels in val_loader:
 
+            images = images.to(device)
+            labels = labels.to(device)
+
             labels = labels.unsqueeze(1)
 
             predictions = model(images)
@@ -248,6 +258,9 @@ test_loss = 0
 
 with torch.no_grad():
     for images, labels in test_loader:
+
+        images = images.to(device)
+        labels = labels.to(device)
 
         labels = labels.unsqueeze(1)
 
