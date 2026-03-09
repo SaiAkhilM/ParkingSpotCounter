@@ -139,17 +139,18 @@ for images, labels in test_loader:
     print(labels)
     break
 
+# model
 class ConvNet(nn.Module):
     def __init__(self):
         super().__init__()
         #input, output, kernel, stride, padding
         self.conv1 = nn.Conv2d(3, 32, 3, 1, 1)
-        # kernel size, stride
-        self.pool1 = nn.MaxPool2d(2, 2)
-
         self.conv2 = nn.Conv2d(32, 64, 3, 1, 1)
         self.conv3 = nn.Conv2d(64, 128, 3, 1, 1)
         
+        # kernel size, stride
+        self.pool = nn.MaxPool2d(2, 2)
+        self.relu = nn.ReLU()
 
         # less overfitting, faster training. reduces number of parameters
         # [128, 46, 62] -> [128, 1, 1]
@@ -159,21 +160,31 @@ class ConvNet(nn.Module):
         self.fc1 = nn.Linear(128, 64)
         self.fc2 = nn.Linear(64, 1)
 
-        self.relu = nn.ReLU()
 
         # conv forward 
     def forward(self, x):
         x = self.relu(self.conv1(x))
-        x = self.pool1(x)
+        x = self.pool(x)
+
         x = self.relu(self.conv2(x))
-        x = self.pool2(x)
+        x = self.pool(x)
+
         x = self.relu(self.conv3(x))
-        x = self.pool3(x)
+        x = self.pool(x)
 
         x = self.gap(x)                 
-        x = x.flatten(start_dim=1)     
+        x = torch.flatten(start_dim=1)     
+
         x = self.relu(self.fc1(x))      
         output = self.fc2(x)            
         return output
     
+    # device. define model here for the optimizer part
+
+    # Test forward pass
+
+    # loss and optimizer
+    criterion = nn.MSELoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     
+
