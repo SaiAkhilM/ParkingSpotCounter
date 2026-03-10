@@ -277,7 +277,9 @@ avg_test_loss = test_loss / len(test_loader)
 
 print("\nFinal Test Loss:", avg_test_loss)
 
-
+# try both predicting the number of open spots and num of cars
+# have better comments
+# more specific
 
     
 
