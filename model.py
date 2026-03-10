@@ -145,8 +145,11 @@ class ConvNet(nn.Module):
         super().__init__()
         #input, output, kernel, stride, padding
         self.conv1 = nn.Conv2d(3, 32, 3, 1, 1)
+        self.bn1 = nn.BatchNorm2d(32)
         self.conv2 = nn.Conv2d(32, 64, 3, 1, 1)
+        self.bn2 = nn.BatchNorm2d(64)
         self.conv3 = nn.Conv2d(64, 128, 3, 1, 1)
+        self.bn3 = nn.BatchNorm2d(128)
         
         # kernel size, stride
         self.pool = nn.MaxPool2d(2, 2)
@@ -197,7 +200,7 @@ print("Output shape:", outputs.shape)
 
 # loss and optimizer
 criterion = nn.MSELoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=0.01)
 
 
 # training loop
