@@ -75,14 +75,14 @@ fig.canvas.mpl_connect("key_press_event", on_key)
 # transforms
 train_transforms = v2.Compose([
     v2.ToTensor(),
-    v2.Resize((128, 128)),
+    v2.Resize((375, 500)),
     v2.RandomHorizontalFlip(p=0.5),
     v2.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.2)
 ])
 
 eval_transforms = v2.Compose([
     v2.ToTensor(),
-    v2.Resize((128, 128))
+    v2.Resize((375, 500))
 ])
 
 # dataset
@@ -185,6 +185,7 @@ class ConvNet(nn.Module):
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 print("Using device:", device)
 
 # device. define model here for the optimizer part
@@ -192,6 +193,7 @@ model = ConvNet().to(device)
 
 # Test forward pass
 images, labels = next(iter(train_loader))
+images = images.to(device)
 outputs = model(images)
 
 print("\nForward Pass Test")
@@ -280,6 +282,7 @@ print("\nFinal Test Loss:", avg_test_loss)
 # try both predicting the number of open spots and num of cars
 # have better comments
 # more specific
+# do we change dimensions of each layer if we change image size? 
 
     
 
