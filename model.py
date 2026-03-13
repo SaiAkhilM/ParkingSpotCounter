@@ -3,6 +3,7 @@ from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import math
 
 import torch
 import torch.nn as nn
@@ -14,10 +15,12 @@ from sklearn.model_selection import train_test_split
 df = pd.read_csv("CNR-EXT.csv")
 # remove bad last row
 df = df.iloc[:-1].reset_index(drop=True)
+print(df["available_spots"].mean())
 
 # visualization
 cameras = sorted(df["camera"].unique())
 current_index = 0
+
 
 fig = plt.figure(figsize=(12, 12))
 
@@ -75,14 +78,14 @@ fig.canvas.mpl_connect("key_press_event", on_key)
 # transforms
 train_transforms = v2.Compose([
     v2.ToTensor(),
-    v2.Resize((375, 500)),
+    v2.Resize((128, 128)),
     v2.RandomHorizontalFlip(p=0.5),
     v2.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.2)
 ])
 
 eval_transforms = v2.Compose([
     v2.ToTensor(),
-    v2.Resize((375, 500))
+    v2.Resize((128, 128))
 ])
 
 # dataset
@@ -117,9 +120,10 @@ val_dataset = ParkingDataset(val_df.reset_index(drop=True), transform=eval_trans
 test_dataset = ParkingDataset(test_df.reset_index(drop=True), transform=eval_transforms)
 
 # dataloaders
-train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True)
-val_loader = DataLoader(val_dataset, batch_size=8, shuffle=False)
-test_loader = DataLoader(test_dataset, batch_size=8, shuffle=False)
+# num_workers only works in GPU, not CPU so make sure to get rid of them if you are running locally.
+train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True, num_workers=16, pin_memory=True)
+val_loader = DataLoader(val_dataset, batch_size=8, shuffle=False, num_workers=16, pin_memory=True)
+test_loader = DataLoader(test_dataset, batch_size=8, shuffle=False, num_workers=16, pin_memory=True)
 
 print("\nTrain Loader:")
 for images, labels in train_loader:
@@ -138,6 +142,10 @@ for images, labels in test_loader:
     print(images.shape)
     print(labels)
     break
+
+# device setup
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("Using device:", device)
 
 # model
 class ConvNet(nn.Module):
@@ -181,12 +189,6 @@ class ConvNet(nn.Module):
         x = self.relu(self.fc1(x))      
         output = self.fc2(x)            
         return output
-    
-
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-print("Using device:", device)
 
 # device. define model here for the optimizer part
 model = ConvNet().to(device)
@@ -204,10 +206,9 @@ print("Output shape:", outputs.shape)
 criterion = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=0.01)
 
-
 # training loop
 print("\nStarting Training...\n")
-epochs = 1
+epochs = 10
 
 for epoch in range(epochs):
 
@@ -215,14 +216,10 @@ for epoch in range(epochs):
     total_loss = 0
 
     for images, labels in train_loader:
-
         images = images.to(device)
-        labels = labels.to(device)
-
-        labels = labels.unsqueeze(1)  # match output shape [batch,1]
+        labels = labels.to(device).unsqueeze(1)
 
         predictions = model(images)
-
         loss = criterion(predictions, labels)
 
         optimizer.zero_grad()
@@ -232,6 +229,7 @@ for epoch in range(epochs):
         total_loss += loss.item()
 
     avg_train_loss = total_loss / len(train_loader)
+    avg_train_rmse = math.sqrt(avg_train_loss)
 
     # validation
     model.eval()
@@ -239,50 +237,45 @@ for epoch in range(epochs):
 
     with torch.no_grad():
         for images, labels in val_loader:
-
             images = images.to(device)
-            labels = labels.to(device)
-
-            labels = labels.unsqueeze(1)
+            labels = labels.to(device).unsqueeze(1)
 
             predictions = model(images)
-
             loss = criterion(predictions, labels)
 
             val_loss += loss.item()
 
     avg_val_loss = val_loss / len(val_loader)
+    avg_val_rmse = math.sqrt(avg_val_loss)
 
-    print(f"Epoch {epoch+1}/{epochs} | Train Loss: {avg_train_loss:.4f} | Val Loss: {avg_val_loss:.4f}")
+    print(
+        f"Epoch {epoch+1}/{epochs} | "
+        f"Train MSE: {avg_train_loss:.4f} | Train RMSE: {avg_train_rmse:.4f} | "
+        f"Val MSE: {avg_val_loss:.4f} | Val RMSE: {avg_val_rmse:.4f}"
+    )
 
-
-
-# ----- FINAL TEST EVALUATION -----
+# final testing 
 model.eval()
-test_loss = 0
+total_test_loss = 0
 
 with torch.no_grad():
     for images, labels in test_loader:
-
         images = images.to(device)
-        labels = labels.to(device)
-
-        labels = labels.unsqueeze(1)
+        labels = labels.to(device).unsqueeze(1)
 
         predictions = model(images)
-
         loss = criterion(predictions, labels)
 
-        test_loss += loss.item()
+        total_test_loss += loss.item()
 
-avg_test_loss = test_loss / len(test_loader)
+avg_test_mse = total_test_loss / len(test_loader)
+avg_test_rmse = math.sqrt(avg_test_mse)
 
-print("\nFinal Test Loss:", avg_test_loss)
+print("\n Test Results:")
+print(f"Test MSE: {avg_test_mse:.4f}")
+print(f"Test RMSE: {avg_test_rmse:.4f}")
 
-# try both predicting the number of open spots and num of cars
-# have better comments
-# more specific
-# do we change dimensions of each layer if we change image size? 
-
-    
-
+# TODO Coding Portion:
+# Predict both the number of open spots and num of cars instead of just the empty slots to see which one does better
+# Have better comments for each section so the code is easier to understand
+# Try to decrease RMSE (average is around 6 right now after running 10 epochs). Make sure model is not overfitting.
