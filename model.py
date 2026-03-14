@@ -169,25 +169,22 @@ class ConvNet(nn.Module):
 
         # 128 -> 64 -> 1
         self.fc1 = nn.Linear(128, 64)
+        self.dropout = nn.Dropout(0.3)
         self.fc2 = nn.Linear(64, 1)
 
 
         # conv forward 
     def forward(self, x):
-        x = self.relu(self.conv1(x))
-        x = self.pool(x)
+        x = self.pool(self.relu(self.bn1(self.conv1(x))))
+        x = self.pool(self.relu(self.bn2(self.conv2(x))))
+        x = self.pool(self.relu(self.bn3(self.conv3(x))))
 
-        x = self.relu(self.conv2(x))
-        x = self.pool(x)
+        x = self.gap(x)
+        x = torch.flatten(x, start_dim=1)
 
-        x = self.relu(self.conv3(x))
-        x = self.pool(x)
-
-        x = self.gap(x)                 
-        x = torch.flatten(x, start_dim=1)    
-
-        x = self.relu(self.fc1(x))      
-        output = self.fc2(x)            
+        x = self.relu(self.fc1(x))
+        x = self.dropout(x)
+        output = self.fc2(x)
         return output
 
 # device. define model here for the optimizer part
@@ -208,7 +205,7 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=0.01)
 
 # training loop
 print("\nStarting Training...\n")
-epochs = 10
+epochs = 15
 
 for epoch in range(epochs):
 
