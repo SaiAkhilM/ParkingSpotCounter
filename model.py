@@ -194,7 +194,7 @@ def run_experiment(target_col):
 
     # dataloaders
     # on some local environments, num_workers may cause issues. if so, set num_workers=0
-    train_loader = DataLoader(train_dataset, batch_size=8, shuffle=False, num_workers=16, pin_memory=True)
+    train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True, num_workers=16, pin_memory=True)
     val_loader = DataLoader(val_dataset, batch_size=8, shuffle=False, num_workers=16, pin_memory=True)
     test_loader = DataLoader(test_dataset, batch_size=8, shuffle=False, num_workers=16, pin_memory=True)
     
