@@ -80,14 +80,14 @@ fig.canvas.mpl_connect("key_press_event", on_key)
 # we use the same augmentations for both experiments
 train_transforms = v2.Compose([
     v2.ToTensor(),
-    v2.Resize((128, 128)),
+    v2.Resize((224,224)),
     v2.RandomHorizontalFlip(p=0.5),
     v2.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.2)
 ])
 
 eval_transforms = v2.Compose([
     v2.ToTensor(),
-    v2.Resize((128, 128))
+    v2.Resize((224,224))
 ])
 
 # dataset
@@ -231,7 +231,7 @@ def run_experiment(target_col):
 
     # loss and optimizer
     criterion = nn.MSELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=0.01)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=0.0001)
 
     # training loop
     print("\nStarting Training...\n")
