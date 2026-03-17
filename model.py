@@ -326,6 +326,11 @@ def run_experiment(target_col):
 
     plt.savefig(f"rmse_curve_{target_col}.png")
     plt.show()
+
+    # save model weights
+    torch.save(model.state_dict(), f"{target_col}_model.pth")
+    print(f"Saved model: {target_col}_model.pth")
+
     return avg_test_rmse
 
 # experiment 1: predict empty spots
@@ -334,8 +339,13 @@ empty_rmse = run_experiment("available_spots")
 # experiment 2: predict number of cars
 cars_rmse = run_experiment("num_cars")
 
+print("\n" + "="*60)
+print("FINAL COMPARISON")
+print("="*60)
+print(f"Available Spots RMSE: {empty_rmse:.4f}")
+print(f"Number of Cars RMSE: {cars_rmse:.4f}")
 
 # TODO Coding Portion:
-# Predict both the number of open spots and num of cars instead of just the empty slots to see which one does better
-# Have better comments for each section so the code is easier to understand
+# Predict both the number of open spots and num of cars instead of just the empty slots to see which one does better.
+# Have better comments for each section so the code is easier to understand.
 # Try to decrease RMSE (average is around 6 right now after running 10 epochs). Make sure model is not overfitting.
