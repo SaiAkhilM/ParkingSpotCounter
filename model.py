@@ -305,9 +305,17 @@ def run_experiment(target_col):
             f"Val MSE: {avg_val_loss:.4f} | Val RMSE: {avg_val_rmse:.4f}"
         )
 
+    # load best model before testing
+    model.load_state_dict(torch.load(f"{target_col}_best_model.pth"))
+    model.eval()
+
     # final testing 
     model.eval()
     total_test_loss = 0
+
+    # store predictions and labels for analysis
+    all_preds = []
+    all_labels = []
 
     with torch.no_grad():
         for images, labels in test_loader:
@@ -315,8 +323,12 @@ def run_experiment(target_col):
             labels = labels.to(device).unsqueeze(1)
 
             predictions = model(images)
-            loss = criterion(predictions, labels)
 
+            # store predictions and labels
+            all_preds.extend(predictions.cpu().numpy())
+            all_labels.extend(labels.cpu().numpy())
+
+            loss = criterion(predictions, labels)
             total_test_loss += loss.item()
 
     avg_test_mse = total_test_loss / len(test_loader)
@@ -326,6 +338,46 @@ def run_experiment(target_col):
     print(f"Test MSE: {avg_test_mse:.4f}")
     print(f"Test RMSE: {avg_test_rmse:.4f}")
     print(f"Baseline RMSE: {baseline_rmse:.4f}")
+
+    # convert predictions and labels to numpy arrays
+    all_preds = np.array(all_preds).flatten()
+    all_labels = np.array(all_labels).flatten()
+
+    # compute test accuracy based on tolerance
+    # prediction is correct if it is within +/- 3 of the true value
+    tolerance = 3
+    accuracy = np.mean(np.abs(all_preds - all_labels) <= tolerance)
+
+    print(f"Test Accuracy (within +/- {tolerance}): {accuracy*100:.2f}%")
+
+    # plot predictions vs ground truth
+    plt.figure(figsize=(6,6))
+    plt.scatter(all_labels, all_preds, alpha=0.5)
+
+    # ideal prediction line
+    min_val = min(all_labels.min(), all_preds.min())
+    max_val = max(all_labels.max(), all_preds.max())
+    plt.plot([min_val, max_val], [min_val, max_val], linestyle='--')
+
+    plt.xlabel("True Values")
+    plt.ylabel("Predicted Values")
+    plt.title(f"Predictions vs Ground Truth ({target_col})")
+
+    plt.savefig(f"scatter_{target_col}.png")
+    plt.show()
+
+    # plot error distribution
+    residuals = all_preds - all_labels
+
+    plt.figure(figsize=(6,4))
+    plt.hist(residuals, bins=30)
+
+    plt.xlabel("Prediction Error")
+    plt.ylabel("Frequency")
+    plt.title(f"Error Distribution ({target_col})")
+
+    plt.savefig(f"error_dist_{target_col}.png")
+    plt.show()
 
     # plot training vs validation RMSE. checks whether or not model is overfitting. 
     plt.figure(figsize=(8,5))
@@ -356,8 +408,3 @@ print("FINAL COMPARISON")
 print("="*60)
 print(f"Available Spots RMSE: {empty_rmse:.4f}")
 print(f"Number of Cars RMSE: {cars_rmse:.4f}")
-
-# TODO Coding Portion:
-# Predict both the number of open spots and num of cars instead of just the empty slots to see which one does better.
-# Have better comments for each section so the code is easier to understand.
-# Try to decrease RMSE (average is around 6 right now after running 10 epochs). Make sure model is not overfitting.
