@@ -314,7 +314,7 @@ def run_experiment(target_col):
     print(f"Test RMSE: {avg_test_rmse:.4f}")
     print(f"Baseline RMSE: {baseline_rmse:.4f}")
 
-    # plot training vs validation RMSE
+    # plot training vs validation RMSE. checks whether or not model is overfitting. 
     plt.figure(figsize=(8,5))
     plt.plot(range(1, epochs+1), train_rmse_list, label="Train RMSE")
     plt.plot(range(1, epochs+1), val_rmse_list, label="Validation RMSE")
@@ -324,8 +324,8 @@ def run_experiment(target_col):
     plt.title(f"Training vs Validation RMSE ({target_col})")
     plt.legend()
 
+    plt.savefig(f"rmse_curve_{target_col}.png")
     plt.show()
-    
     return avg_test_rmse
 
 # experiment 1: predict empty spots
