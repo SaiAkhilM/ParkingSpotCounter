@@ -78,7 +78,14 @@ fig.canvas.mpl_connect("key_press_event", on_key)
 show_camera(current_index)
 plt.show()
 
-# transforms
+# transforms:
+
+# Images are resized to 224x224 to reduce computation and improve training speed.
+# This resolution is sufficient since our task depends on coarse visual features
+# (car counts and open spots), not fine details.
+# We use AdaptiveAvgPool2d((1,1)), so the model works with any input size without
+# needing to recalculate layer dimensions.
+
 # we use the same augmentations for both experiments
 train_transforms = v2.Compose([
     v2.ToTensor(),
@@ -243,6 +250,7 @@ def run_experiment(target_col):
     # store RMSE values for plotting
     train_rmse_list = []
     val_rmse_list = []
+    best_val_rmse = float("inf")
 
     for epoch in range(epochs):
 
@@ -285,6 +293,11 @@ def run_experiment(target_col):
         avg_val_rmse = math.sqrt(avg_val_loss)
 
         val_rmse_list.append(avg_val_rmse)
+        # save best model based on validation RMSE
+        if avg_val_rmse < best_val_rmse:
+            best_val_rmse = avg_val_rmse
+            torch.save(model.state_dict(), f"{target_col}_best_model.pth")
+            print(f"Saved BEST model at epoch {epoch+1}")
 
         print(
             f"Epoch {epoch+1}/{epochs} | "
@@ -328,8 +341,7 @@ def run_experiment(target_col):
     plt.show()
 
     # save model weights
-    torch.save(model.state_dict(), f"{target_col}_model.pth")
-    print(f"Saved model: {target_col}_model.pth")
+    print(f"Best model already saved as {target_col}_best_model.pth")
 
     return avg_test_rmse
 
