@@ -16,6 +16,8 @@ df = pd.read_csv("CNR-EXT.csv")
 # remove bad last row
 df = df.iloc[:-1].reset_index(drop=True)
 
+# computes the average number of available spots
+# and average number of cars in the dataset
 print("Avg available spots:", df["available_spots"].mean())
 print("Avg number of cars:", df["num_cars"].mean())
 
@@ -73,8 +75,8 @@ def on_key(event):
 
 fig.canvas.mpl_connect("key_press_event", on_key)
 
-#show_camera(current_index)
-#plt.show()
+show_camera(current_index)
+plt.show()
 
 # transforms
 # we use the same augmentations for both experiments
@@ -82,6 +84,7 @@ train_transforms = v2.Compose([
     v2.ToTensor(),
     v2.Resize((224,224)),
     v2.RandomHorizontalFlip(p=0.5),
+    v2.RandomPerspective(distortion_scale=0.2, p=0.3),
     v2.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.2)
 ])
 
@@ -237,6 +240,10 @@ def run_experiment(target_col):
     print("\nStarting Training...\n")
     epochs = 15
 
+    # store RMSE values for plotting
+    train_rmse_list = []
+    val_rmse_list = []
+
     for epoch in range(epochs):
 
         model.train()
@@ -258,6 +265,8 @@ def run_experiment(target_col):
         avg_train_loss = total_loss / len(train_loader)
         avg_train_rmse = math.sqrt(avg_train_loss)
 
+        train_rmse_list.append(avg_train_rmse)
+
         # validation
         model.eval()
         val_loss = 0
@@ -274,6 +283,8 @@ def run_experiment(target_col):
 
         avg_val_loss = val_loss / len(val_loader)
         avg_val_rmse = math.sqrt(avg_val_loss)
+
+        val_rmse_list.append(avg_val_rmse)
 
         print(
             f"Epoch {epoch+1}/{epochs} | "
@@ -302,12 +313,25 @@ def run_experiment(target_col):
     print(f"Test MSE: {avg_test_mse:.4f}")
     print(f"Test RMSE: {avg_test_rmse:.4f}")
     print(f"Baseline RMSE: {baseline_rmse:.4f}")
+
+    # plot training vs validation RMSE
+    plt.figure(figsize=(8,5))
+    plt.plot(range(1, epochs+1), train_rmse_list, label="Train RMSE")
+    plt.plot(range(1, epochs+1), val_rmse_list, label="Validation RMSE")
+
+    plt.xlabel("Epoch")
+    plt.ylabel("RMSE")
+    plt.title(f"Training vs Validation RMSE ({target_col})")
+    plt.legend()
+
+    plt.show()
+    
     return avg_test_rmse
 
-# run experiment 1: predict empty spots
+# experiment 1: predict empty spots
 empty_rmse = run_experiment("available_spots")
 
-# run experiment 2: predict number of cars
+# experiment 2: predict number of cars
 cars_rmse = run_experiment("num_cars")
 
 
